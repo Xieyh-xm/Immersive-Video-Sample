@@ -43,7 +43,7 @@ RUN yum -y install rh-ruby23 rh-ruby23-ruby-devel rh-ruby23-rubygem* && \
 
 # Build zlib
 ARG ZLIB_VER=1.2.11
-ARG ZILB_REPO=http://zlib.net/zlib-${ZLIB_VER}.tar.gz
+ARG ZILB_REPO=http://zlib.net/fossils/zlib-${ZLIB_VER}.tar.gz
 RUN wget -O - ${ZILB_REPO} | tar xz && \
     cd zlib-${ZLIB_VER} && \
     source /opt/rh/devtoolset-7/enable && \
@@ -99,7 +99,7 @@ RUN wget --no-check-certificate -O - ${BOOST_REPO} | tar xz && \
     cd ${WORKDIR} && rm -rf ./boost_1_63_0*
 
 # Install SVT
-RUN git clone https://github.com/OpenVisualCloud/SVT-HEVC.git && \
+RUN git clone https://gitee.com/xieyh-xm/SVT-HEVC.git && \
     cd SVT-HEVC && \
     source /opt/rh/devtoolset-7/enable && \
     git checkout ec0d95c7e0d5be20586e1b87150bdfb9ae97cf4d && \
@@ -110,7 +110,7 @@ RUN git clone https://github.com/OpenVisualCloud/SVT-HEVC.git && \
     cd ${WORKDIR} && rm -rf ./SVT-HEVC
 
 # Install glog
-RUN git clone https://github.com/google/glog.git && \
+RUN git clone https://gitee.com/xieyh-xm/glog.git && \
     cd glog && \
     git checkout v0.5.0 && \
     source /opt/rh/devtoolset-7/enable && \
@@ -146,7 +146,7 @@ COPY src/ffmpeg/dependency/WorkerServer /root
 
 # Install Thrift
 ARG THRIFT_VER=0.12.0
-ARG THRIFT_REPO=http://apache.osuosl.org/thrift/${THRIFT_VER}/thrift-${THRIFT_VER}.tar.gz
+ARG THRIFT_REPO=http://archive.apache.org/dist/thrift/${THRIFT_VER}/thrift-${THRIFT_VER}.tar.gz
 RUN wget --no-check-certificate -O - ${THRIFT_REPO} | tar xz && \
     cd thrift-${THRIFT_VER} && \
     source /opt/rh/devtoolset-7/enable && \
@@ -184,7 +184,7 @@ EXPOSE 443
 EXPOSE 8080
 
 # Build safe string lib
-RUN git clone https://github.com/intel/safestringlib.git && \
+RUN git clone https://gitee.com/xieyh-xm/safestringlib.git && \
     cd safestringlib && \
     source /opt/rh/devtoolset-7/enable && \
     cmake . && \

@@ -9,7 +9,7 @@ if [ "${REPO}" != "oss" ] ; then
     if [ ! -d "${FFMPEG_REPO}" ] ; then
         mkdir ${FFMPEG_REPO} && cd ${FFMPEG_REPO}
         git init
-        git remote add origin https://github.com/FFmpeg/FFmpeg.git
+        git remote add origin https://gitee.com/xieyh-xm/FFmpeg.git
         git fetch --depth 1 origin 6b6b9e593dd4d3aaf75f48d40a13ef03bdef9fdb
         git checkout FETCH_HEAD
         cd -

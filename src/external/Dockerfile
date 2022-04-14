@@ -66,7 +66,7 @@ RUN wget -O - ${CMAKE_REPO}/v${CMAKE_VER%.*}/cmake-${CMAKE_VER}.tar.gz | tar xz 
 # Build YASM
 ARG YASM_VER=1.3.0
 ARG YASM_REPO=https://www.tortall.net/projects/yasm/releases/yasm-${YASM_VER}.tar.gz
-RUN  wget -O - ${YASM_REPO} | tar xz && \
+RUN  wget --no-check-certificate -O - ${YASM_REPO} | tar xz && \
      cd yasm-${YASM_VER} && \
      sed -i "s/) ytasm.*/)/" Makefile.in && \
      source /opt/rh/devtoolset-7/enable && \
@@ -78,7 +78,7 @@ RUN  wget -O - ${YASM_REPO} | tar xz && \
 # Build CURL
 ARG CURL_VER=7.66.0
 ARG CURL_REPO=https://curl.haxx.se/download/curl-${CURL_VER}.tar.xz
-RUN wget ${CURL_REPO} && \
+RUN wget --no-check-certificate ${CURL_REPO} && \
     xz -d curl-${CURL_VER}.tar.xz && \
     tar -xvf curl-${CURL_VER}.tar && \
     cd curl-${CURL_VER} && \
@@ -90,7 +90,7 @@ RUN wget ${CURL_REPO} && \
 
 # Install BOOST
 ARG BOOST_REPO=https://sourceforge.net/projects/boost/files/boost/1.63.0/boost_1_63_0.tar.gz
-RUN wget -O - ${BOOST_REPO} | tar xz && \
+RUN wget --no-check-certificate -O - ${BOOST_REPO} | tar xz && \
     cd boost_1_63_0 && \
     source /opt/rh/devtoolset-7/enable && \
     ./bootstrap.sh --without-libraries=python && \
@@ -112,6 +112,7 @@ RUN git clone https://github.com/OpenVisualCloud/SVT-HEVC.git && \
 # Install glog
 RUN git clone https://github.com/google/glog.git && \
     cd glog && \
+    git checkout v0.5.0 && \
     source /opt/rh/devtoolset-7/enable && \
     sed -i '23s/OFF/ON/' CMakeLists.txt && \
     cmake -H. -Bbuild -G "Unix Makefiles" && \
@@ -121,14 +122,14 @@ RUN git clone https://github.com/google/glog.git && \
 
 # Install lttng
 RUN source /opt/rh/devtoolset-7/enable && \
-    wget -c https://lttng.org/files/urcu/userspace-rcu-latest-0.11.tar.bz2 && \
+    wget --no-check-certificate -c https://lttng.org/files/urcu/userspace-rcu-latest-0.11.tar.bz2 && \
     tar -xjf userspace-rcu-latest-0.11.tar.bz2 && \
     cd userspace-rcu-0.11.* && \
     ./configure && \
     make -j $(nproc) && \
     make install && ldconfig && \
     cd ../ && rm -rf userspace-rcu-0.11.* && \
-    wget -c http://lttng.org/files/lttng-ust/lttng-ust-latest-2.11.tar.bz2 && \
+    wget --no-check-certificate -c http://lttng.org/files/lttng-ust/lttng-ust-latest-2.11.tar.bz2 && \
     tar -xjf lttng-ust-latest-2.11.tar.bz2 && \
     cd lttng-ust-2.11.* && \
     ./configure --disable-man-pages && \
@@ -136,16 +137,20 @@ RUN source /opt/rh/devtoolset-7/enable && \
     make install && ldconfig && \
     cd ../ && rm -rf lttng-ust-2.11.*
 
-# Copy patches
-COPY ./*.patch ${WORKDIR}/
+# Copy source
+COPY ./src ${WORKDIR}
+COPY src/ffmpeg/dependency/*.so /usr/local/lib/
+COPY src/ffmpeg/dependency/*.pc /usr/local/lib/pkgconfig/
+COPY src/ffmpeg/dependency/*.h /usr/local/include/
+COPY src/ffmpeg/dependency/WorkerServer /root
 
 # Install Thrift
 ARG THRIFT_VER=0.12.0
 ARG THRIFT_REPO=http://apache.osuosl.org/thrift/${THRIFT_VER}/thrift-${THRIFT_VER}.tar.gz
-RUN wget -O - ${THRIFT_REPO} | tar xz && \
+RUN wget --no-check-certificate -O - ${THRIFT_REPO} | tar xz && \
     cd thrift-${THRIFT_VER} && \
     source /opt/rh/devtoolset-7/enable && \
-    patch configure ../Disable_cxx11_abi_for_thrift.patch && \
+    patch configure ../external/Disable_cxx11_abi_for_thrift.patch && \
     sed -i '21 a #  include <unistd.h>' ./lib/cpp/src/thrift/transport/PlatformSocket.h && \
     ./configure --with-boost=/usr/local --with-boost-libdir=/usr/local/lib --with-libevent=/usr --with-java=0 && \
     make -j`nproc` && \
@@ -159,11 +164,24 @@ RUN git clone https://github.com/OpenHEVC/openHEVC.git && \
     git config --global user.email "you@example.com" && \
     git config --global user.name "Your Name" && \
     git checkout ffmpeg_update && \
-    git am --whitespace=fix ../Update-buffer-operation-and-fix-stream-loop-coredump.patch && \
+    git am --whitespace=fix ../external/Update-buffer-operation-and-fix-stream-loop-coredump.patch && \
     ./configure --libdir=/usr/lib64 --disable-sdl2 && \
     make -j `nproc` && \
     make install && \
     cd ${WORKDIR} && rm -rf ./openHEVC
+
+# Build Nginx
+ARG NGINX_VER=1.13.1
+ARG NGINX_REPO=http://nginx.org/download/nginx-${NGINX_VER}.tar.gz
+RUN wget --no-check-certificate -O - ${NGINX_REPO} | tar xz && \
+    cd nginx-${NGINX_VER} && \
+    source /opt/rh/devtoolset-7/enable && \
+    ./configure --with-http_ssl_module && \
+    make -j `nproc` && \
+    make install && \
+    cd ${WORKDIR} && rm -rf ./nginx*
+EXPOSE 443
+EXPOSE 8080
 
 # Build safe string lib
 RUN git clone https://github.com/intel/safestringlib.git && \
@@ -176,8 +194,8 @@ RUN git clone https://github.com/intel/safestringlib.git && \
     cp ./include/* /usr/local/include/safestringlib/ && \
     cd ${WORKDIR} && rm -rf ./safestringlib
 
-# Remove all intermediate files
-RUN cd ${WORKDIR} && rm -rf *
+# Configure And Run Nginx
+COPY nginx_conf /usr/local/nginx/conf
 
 # Unset proxy if necessary
 RUN if [ -n "${http_proxy}" ]; then \
